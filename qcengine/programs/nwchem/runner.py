@@ -242,7 +242,7 @@ task python
         # Read the NWChem stdout file and, if needed, the hess or grad files
         # LW 7Jul21: I allow exceptions to be raised so that we can detect errors
         #   in the parsing of output files
-        qcvars, nwhess, nwgrad, nwmol, version, errorTMP = harvest(input_model.molecule, stdout, **outfiles)
+        qcvars, nwhess, nwgrad, nwmol, version, module, errorTMP = harvest(input_model.molecule, stdout, **outfiles)
 
         if nwgrad is not None:
             qcvars[f"{input_model.model.method.upper()[4:]} TOTAL GRADIENT"] = nwgrad
@@ -264,12 +264,16 @@ task python
         build_out(qcvars)
         atprop = build_atomicproperties(qcvars)
 
+        provenance = Provenance(creator="NWChem", version=self.get_version(), routine="nwchem").dict()
+        if module is not None:
+            provenance["module"] = module
+
         # Format them inout an output
         output_data = {
             "schema_version": 1,
             "extras": {"outfiles": outfiles, **input_model.extras},
             "properties": atprop,
-            "provenance": Provenance(creator="NWChem", version=self.get_version(), routine="nwchem"),
+            "provenance": provenance,
             "return_result": retres,
             "stderr": stderr,
             "stdout": stdout,
