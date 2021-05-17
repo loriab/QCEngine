@@ -174,7 +174,7 @@ def contractual_mp2(
                     )
                     or (qc_module == "nwchem-tce" and method in ["mp2", "mp3", "mp4"])
                     or (
-                        qc_module == "nwchem" and reference in ["rhf"] and method in ["ccsd", "ccsd+t(ccsd)", "ccsd(t)"]
+                        qc_module == "nwchem-cc" and reference in ["rhf"] and method in ["ccsd", "ccsd+t(ccsd)", "ccsd(t)"]
                     )
                     or (qc_module == "nwchem-directmp2" and reference == "rhf" and method == "mp2")
                     or (
