@@ -774,6 +774,7 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE | re.DOTALL,
     )
     if mobj:
+        print("matched ccsdt(q) ncc")
         psivar["(Q) CORRECTION ENERGY"] = mobj.group("tcorr")
         psivar["[Q] CORRECTION ENERGY"] = mobj.group("bkttcorr")
         psivar["CCSDT(Q) TOTAL ENERGY"] = psivar["(Q) CORRECTION ENERGY"] + psivar["CCSDT TOTAL ENERGY"]
