@@ -276,6 +276,7 @@ def harvest_outfile_pass(outtext):
     )
     if mobj:
         # psivar["MP2 CORRELATION ENERGY"] = mobj.group("mp2corl")
+        print("matched mp3 ncc", mobj.groupdict())
         psivar["MP3 CORRELATION ENERGY"] = mobj.group("mp3corl")
         psivar["MP3 CORRECTION ENERGY"] = mobj.group("mp3corr")
         psivar["MP3 TOTAL ENERGY"] = mobj.group("mp3tot")
@@ -876,6 +877,37 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE | re.DOTALL,
     )
     if mobj:  # PRINT=2 to get SCS components
+        mobj3 = re.search(r"The reference state is a ROHF wave function.", outtext)
+        mobj4 = re.search(r"executable xvcc finished", outtext)
+        iterCC = mobj.group("iterCC")
+        if mobj4:  # vcc
+            if mobj.group("BB"):
+                aabb = Decimal(mobj.group("AA")) + Decimal(mobj.group("BB"))
+            else:
+                aabb = Decimal("2") * Decimal(mobj.group("AA"))
+            psivar[f"{iterCC} OPPOSITE-SPIN CORRELATION ENERGY"] = mobj.group("AB")
+            if not mobj3:
+                psivar[f"{iterCC} SAME-SPIN CORRELATION ENERGY"] = aabb
+        psivar["%s CORRELATION ENERGY" % (mobj.group("iterCC"))] = mobj.group("corl")
+
+    mobj = re.search(
+        # fmt: off
+        r'^\s+' + r'(?P<fullCC>(?P<iterCC>L?CC(?:\w+))(?:\(T\))?)' + r'\s+(?:energy will be calculated.)\s*' +
+        r'(?:.*?)' +
+        r'^\s+' + r'Amplitude equations converged in' + r'\s*\d+\s*' + r'iterations.\s*' +
+        r'(?:.*?)' +
+         r'^\s+' + r'The AA contribution to the correlation energy is:\s+' + r"(?P<AA>" + NUMBER + r")" + r'\s+a.u.\s*' +
+        r'(^\s+' + r'The BB contribution to the correlation energy is:\s+' + r"(?P<BB>" + NUMBER + r")" + r'\s+a.u.\s*' + r")?" +
+         r'^\s+' + r'The AB contribution to the correlation energy is:\s+' + r"(?P<AB>" + NUMBER + r")" + r'\s+a.u.\s*' +
+        r'^\s+' + r'The total correlation energy is\s+' + r"(?P<corl>" + NUMBER + r")" + r'\s+a.u.\s*' +
+        r'(?:.*?)' +
+        r'^\s+' + r'(?:A miracle come to pass. )?' + r'The CC iterations have converged.' + r'\s*$',
+        # fmt: on
+        outtext,
+        re.MULTILINE | re.DOTALL,
+    )
+    if mobj:  # PRINT=2 to get SCS components
+        print("matched scslccd", mobj.groupdict())
         mobj3 = re.search(r"The reference state is a ROHF wave function.", outtext)
         mobj4 = re.search(r"executable xvcc finished", outtext)
         iterCC = mobj.group("iterCC")

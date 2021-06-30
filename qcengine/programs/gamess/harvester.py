@@ -11,7 +11,7 @@ import qcelemental as qcel
 from qcelemental.models import Molecule
 from qcelemental.molparse import regex
 
-from ..util import PreservingDict
+from ..util import PreservingDict, load_hessian
 
 pp = pprint.PrettyPrinter(width=120, compact=True, indent=1)
 logger = logging.getLogger(__name__)
@@ -30,6 +30,16 @@ def harvest(
         qcvars["CURRENT CORRELATION ENERGY"] = qcvars["CCSD+T(CCSD) CORRELATION ENERGY"]
         qcvars["CURRENT ENERGY"] = qcvars["CCSD+T(CCSD) TOTAL ENERGY"]
 
+    datasections = {}
+    if outfiles.get("gamess.dat"):
+        datasections = harvest_datfile(outfiles["gamess.dat"])
+
+    calc_hess = None
+    if "$HESS" in datasections:
+        calc_hess = load_hessian(datasections["$HESS"], dtype="gamess")
+        if np.count_nonzero(calc_hess) == 0:
+            calc_hess = None
+
     if calc_mol:
         qcvars["NUCLEAR REPULSION ENERGY"] = str(round(calc_mol.nuclear_repulsion_energy(), 8))
         if in_mol:
@@ -44,13 +54,30 @@ def harvest(
 
         return_grad = None
         if calc_grad is not None:
-            return_grad = mill.align_gradient(calc_grad)
+            return_grad = mill.align_gradient(np.array(calc_grad).reshape(-1, 3))
 
         return_hess = None
+        if calc_hess is not None:
+            return_hess = mill.align_hessian(np.array(calc_hess))
     else:
         raise ValueError("""No coordinate information extracted from gamess output.""")
 
     return qcvars, return_hess, return_grad, return_mol, module
+
+
+def harvest_datfile(datfile: str) -> Dict[str, str]:
+    sections = datfile.split(r"$END")
+    goodies = {}
+
+    for i, sec in enumerate(sections):
+        lsec = sec.split("\n")
+        for iln, ln in enumerate(lsec):
+            if ln.strip():
+                key = ln.strip()
+                break
+        goodies[key] = "\n".join(lsec[iln + 1 :])
+
+    return goodies
 
 
 def harvest_output(outtext):
