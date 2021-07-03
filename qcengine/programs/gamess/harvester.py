@@ -40,6 +40,11 @@ def harvest(
         if np.count_nonzero(calc_hess) == 0:
             calc_hess = None
 
+    # Sometimes the hierarchical setting of CURRENT breaks down
+    if method.lower() in ["gms-ccsd+t(ccsd)", "ccsd+t(ccsd)"]:
+        qcvars["CURRENT CORRELATION ENERGY"] = qcvars["CCSD+T(CCSD) CORRELATION ENERGY"]
+        qcvars["CURRENT ENERGY"] = qcvars["CCSD+T(CCSD) TOTAL ENERGY"]
+
     if calc_mol:
         qcvars["NUCLEAR REPULSION ENERGY"] = str(round(calc_mol.nuclear_repulsion_energy(), 8))
         if in_mol:

@@ -758,6 +758,7 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE | re.DOTALL,
     )
     if mobj:
+        print("matched ccsd+t(ccsd) vcc", mobj.groupdict())
         psivar["CCSD TOTAL ENERGY"] = mobj.group("ccsdtot")
         psivar["CCSD+T(CCSD) TOTAL ENERGY"] = mobj.group("ccsdtccsdtot")
         psivar["CCSD+T(CCSD) CORRELATION ENERGY"] = psivar["CCSD+T(CCSD) TOTAL ENERGY"] - psivar["SCF TOTAL ENERGY"]
