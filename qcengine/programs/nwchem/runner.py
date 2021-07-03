@@ -246,7 +246,7 @@ task python
         # Read the NWChem stdout file and, if needed, the hess or grad files
         # LW 7Jul21: I allow exceptions to be raised so that we can detect errors
         #   in the parsing of output files
-        qcvars, nwhess, nwgrad, nwmol, version, module, errorTMP = harvest(input_model.molecule, stdout, **outfiles)
+        qcvars, nwhess, nwgrad, nwmol, version, module, errorTMP = harvest(input_model.molecule, input_model.model.method, stdout, **outfiles)
 
         try:
             if nwgrad is not None:
