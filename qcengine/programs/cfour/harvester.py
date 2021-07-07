@@ -486,7 +486,7 @@ def harvest_outfile_pass(outtext):
         # fmt: off
         r'^\s+' + r'(?:\d+)' + r'\s+' + r'(?P<corl>' + NUMBER + r')\s+' +
                   NUMBER + r'\s+' + NUMBER + r'\s+' +
-                  NUMBER + r'\s+' + NUMBER +  r'\s+' +
+                  NUMBER + r'\s+' + NUMBER + r'\s+' +
                   r'(' + NUMBER +  r')?' + r'(' + r'\s+' + NUMBER + r')?' + r'\s*' +
         r'^\s*' +
         r'^\s*' + r'(?:\w+(?:-(1a|1b|2|3))? iterations converged .*?)' +
