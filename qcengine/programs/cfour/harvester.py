@@ -676,6 +676,8 @@ def harvest_outfile_pass(outtext):
         )
         psivar["CCSD(T) TOTAL ENERGY"] = psivar["(T) CORRECTION ENERGY"] + psivar["CCSD TOTAL ENERGY"]
         psivar["CCSD(T) CORRELATION ENERGY"] = psivar["(T) CORRECTION ENERGY"] + psivar["CCSD CORRELATION ENERGY"]
+        psivar["A-CCSD(T) TOTAL ENERGY"] = mobj.group("accsdttot")
+        psivar["A-CCSD(T) CORRELATION ENERGY"] = psivar["A-(T) CORRECTION ENERGY"] + psivar["CCSD CORRELATION ENERGY"]
         module = "ncc"
 
     mobj = re.search(
@@ -737,6 +739,7 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE | re.DOTALL,
     )
     if mobj:
+        print("matched a-ccsd(t) ecc", mobj.groupdict())
         psivar["HF TOTAL ENERGY"] = mobj.group("hf")
         psivar["MP2 CORRELATION ENERGY"] = mobj.group("mp2corl")
         psivar["CCSD CORRELATION ENERGY"] = mobj.group("ccsdcorl")
