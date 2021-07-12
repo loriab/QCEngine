@@ -285,6 +285,7 @@ def harvest_outfile_pass(outtext):
         psivar["MP3 DOUBLES ENERGY"] = mobj.group("mp3corl")
         module = "ncc"
 
+
     # Process MP4
     mobj = re.search(
         # fmt: off
@@ -400,6 +401,7 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE | re.DOTALL,
     )
     if mobj:
+        print("matched mp4 ncc", mobj.groupdict())
         # psivar["MP2 CORRELATION ENERGY"] = mobj.group("mp2corl")
         module = "ncc"
         mtd = {"MP4": "MP4", "SDQ-MP4": "MP4(SDQ)"}[mobj.group("mp4flavor")]
