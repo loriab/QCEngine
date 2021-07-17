@@ -148,7 +148,7 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE,
     )
     if mobj:
-        print("matched mp2r")
+        print("matched mp2r", mobj.groups())
         psivar["MP2 SAME-SPIN CORRELATION ENERGY"] = 2 * Decimal(mobj.group(1))
         psivar["MP2 OPPOSITE-SPIN CORRELATION ENERGY"] = mobj.group(2)
         psivar["MP2 CORRELATION ENERGY"] = 2 * Decimal(mobj.group(1)) + Decimal(mobj.group(2))
@@ -433,6 +433,7 @@ def harvest_outfile_pass(outtext):
         re.MULTILINE | re.DOTALL,
     )
     if mobj:
+        print("matched ci with full %s iterating %s" % (mobj.group("fullCI"), mobj.group("iterCI")))
         module = {"has come": "vcc", "come": "ecc"}[mobj.group("ccprog")]
 
         mtd = mobj.group("iterCI").upper()
@@ -448,6 +449,7 @@ def harvest_outfile_pass(outtext):
             re.MULTILINE | re.DOTALL,
         )
         if mobj2 and mobj.group("fullCI") == "QCISD(T)":
+            print("matched qcisd(t)", mobj2.groupdict())
             psivar["QCISD(T) TOTAL ENERGY"] = mobj2.group("qcisdt")
             psivar["QCISD(T) CORRECTION ENERGY"] = Decimal(mobj2.group("qcisdt")) - Decimal(mobj2.group("qcisd"))
             psivar["QCISD(T) CORRELATION ENERGY"] = psivar["QCISD(T) TOTAL ENERGY"] - psivar["SCF TOTAL ENERGY"]
@@ -1199,6 +1201,11 @@ def harvest(p4Mol: Molecule, method: str, c4out, **largs):
         # MP2 available in HF Hessian so need to counteract
         qcvars.pop("CURRENT CORRELATION ENERGY")
         qcvars["CURRENT ENERGY"] = qcvars["HF TOTAL ENERGY"]
+
+    if fcmHess is not None and method.lower() in ["c4-hf", "hf"]:
+        # MP2 available in HF Hessian so need to counteract
+        outPsivar.pop("CURRENT CORRELATION ENERGY")
+        outPsivar["CURRENT ENERGY"] = outPsivar["HF TOTAL ENERGY"]
 
     # Reconcile the coordinate information: several cases
     #   Case                            p4Mol   GRD      Check consistency           Apply orientation?     ReturnMol (1-19-2014)
