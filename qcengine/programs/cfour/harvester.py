@@ -900,7 +900,9 @@ def harvest_outfile_pass(outtext):
 
     mobj = re.search(
         # fmt: off
-        r'^\s+' + r'(?P<fullCC>(?P<iterCC>L?CC(?:\w+))(?:\(T\))?)' + r'\s+(?:energy will be calculated.)\s*' +
+        #r'^\s+' + r'(?P<fullCC>(?P<iterCC>L?CC(?:\w+))(?:\(T\))?)' + r'\s+(?:energy will be calculated.)\s*' +
+        # better one for LCC and one for CC, right?
+        r'^\s+' + r'(?P<fullCC>(?P<iterCC>LCC(?:\w+))(?:\(T\))?)' + r'\s+(?:energy will be calculated.)\s*' +
         r'(?:.*?)' +
         r'^\s+' + r'Amplitude equations converged in' + r'\s*\d+\s*' + r'iterations.\s*' +
         r'(?:.*?)' +
