@@ -252,9 +252,6 @@ def harvest_outfile_pass(outtext):
             qcvar["MP2 TOTAL ENERGY"] = mobj.group(4)
             qcvar["MP2 OPPOSITE-SPIN CORRELATION ENERGY"] = mobj.group(5)
             qcvar["MP2 SAME-SPIN CORRELATION ENERGY"] = mobj.group(6)
-            mobj3 = re.search(r"\s+UHF-MP2 CALCULATION", outtext, re.MULTILINE)
-            if mobj3:
-                module = "uhfmp2"
 
         mobj = re.search(
             # fmt: off
@@ -274,9 +271,6 @@ def harvest_outfile_pass(outtext):
             print("matched mp2 rohf d", mobj.groups())
             qcvar["MP2 SINGLES ENERGY"] = Decimal(mobj.group(1)) + Decimal(mobj.group(2))
             qcvar["MP2 DOUBLES ENERGY"] = mobj.group(3)
-            mobj3 = re.search(r"\s+RMP2 (ROHF-MBPT2) CALCULATION", outtext, re.MULTILINE)
-            if mobj3:
-                module = "rohfmp2"
 
         mobj = re.search(r"^\s+" + "UHF-MP2 CALCULATION", outtext, re.MULTILINE)
         if mobj:
