@@ -10294,19 +10294,6 @@ for calc in _std_suite:
                     calc["data"]["QCISD(T) CORRELATION ENERGY"] + calc["data"]["HF TOTAL ENERGY"]
                 )
 
-        if "CISD CORRELATION ENERGY" in calc["data"]:
-            calc["data"]["CISD TOTAL ENERGY"] = (
-                calc["data"]["CISD CORRELATION ENERGY"] + calc["data"]["HF TOTAL ENERGY"]
-            )
-
-        if "QCISD CORRELATION ENERGY" in calc["data"]:
-            calc["data"]["QCISD TOTAL ENERGY"] = (
-                calc["data"]["QCISD CORRELATION ENERGY"] + calc["data"]["HF TOTAL ENERGY"]
-            )
-            if "QCISD(T) CORRECTION ENERGY" in calc["data"]:
-                calc["data"]["QCISD(T) CORRELATION ENERGY"] = (calc["data"]["QCISD CORRELATION ENERGY"] + calc["data"]["QCISD(T) CORRECTION ENERGY"])
-                calc["data"]["QCISD(T) TOTAL ENERGY"] = (calc["data"]["QCISD(T) CORRELATION ENERGY"] + calc["data"]["HF TOTAL ENERGY"])
-
         if "LCCD CORRELATION ENERGY" in calc["data"]:
             calc["data"]["LCCD TOTAL ENERGY"] = (
                 calc["data"]["LCCD CORRELATION ENERGY"] + calc["data"]["HF TOTAL ENERGY"]

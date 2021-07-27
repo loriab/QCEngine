@@ -285,7 +285,6 @@ def harvest_outfile_pass(outtext):
         psivar["MP3 DOUBLES ENERGY"] = mobj.group("mp3corl")
         module = "ncc"
 
-
     # Process MP4
     mobj = re.search(
         # fmt: off

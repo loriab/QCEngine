@@ -160,7 +160,11 @@ def contractual_mp2(
             (
                 (
                     (qc_module == "cfour" and reference == "rohf" and method == "mp2" and driver == "hessian")
-                    or (qc_module in ["gamess-serial", "gamess-ddi"] and reference in ["uhf", "rohf"] and method == "mp2")
+                    or (
+                        qc_module in ["gamess-serial", "gamess-ddi"]
+                        and reference in ["uhf", "rohf"]
+                        and method == "mp2"
+                    )
                     or (
                         qc_module in ["gamess-serial", "gamess-ims"]
                         and reference == "rhf"
