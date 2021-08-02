@@ -243,7 +243,11 @@ task python
         stdout = outfiles.pop("stdout")
         stderr = outfiles.pop("stderr")
 
+        method = input_model.model.method.lower()
+        method = method[4:] if method.startswith("nwc-") else method
+
         # Read the NWChem stdout file and, if needed, the hess or grad files
+        # July 2021: nwmol & vector returns now atin/outfile orientation depending on fix_com,orientation=T/F. previously always atin orientation
         # LW 7Jul21: I allow exceptions to be raised so that we can detect errors
         #   in the parsing of output files
         qcvars, nwhess, nwgrad, nwmol, version, module, errorTMP = harvest(
@@ -252,11 +256,11 @@ task python
 
         try:
             if nwgrad is not None:
-                qcvars[f"{input_model.model.method.upper()[4:]} TOTAL GRADIENT"] = nwgrad
+                qcvars[f"{method.upper()} TOTAL GRADIENT"] = nwgrad
                 qcvars["CURRENT GRADIENT"] = nwgrad
 
             if nwhess is not None:
-                qcvars[f"{input_model.model.method.upper()[4:]} TOTAL HESSIAN"] = nwhess
+                qcvars[f"{method.upper()} TOTAL HESSIAN"] = nwhess
                 qcvars["CURRENT HESSIAN"] = nwhess
 
             # Normalize the output as a float or list of floats
@@ -290,6 +294,7 @@ task python
         # Format them inout an output
         output_data = {
             "schema_version": 1,
+            "molecule": nwmol,  # overwrites with outfile Cartesians in case fix_*=F
             "extras": {"outfiles": outfiles, **input_model.extras},
             "properties": atprop,
             "provenance": provenance,
