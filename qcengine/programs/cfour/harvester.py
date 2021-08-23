@@ -999,9 +999,7 @@ def harvest_outfile_pass(outtext):
         # Rather a dinky Molecule as no ghost, charge, or multiplicity
         psivar_coord = Molecule(
             validate=False,
-            **qcel.molparse.to_schema(
-                qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
-            ),
+            **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
         )
 
     # Process atom geometry
@@ -1015,9 +1013,7 @@ def harvest_outfile_pass(outtext):
         molxyz = "1 bohr\n\n%s 0.0 0.0 0.0\n" % (mobj2.group(1))
         psivar_coord = Molecule(
             validate=False,
-            **qcel.molparse.to_schema(
-                qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
-            ),
+            **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
         )
 
     mobj = re.search(
@@ -1034,9 +1030,7 @@ def harvest_outfile_pass(outtext):
         molxyz = "1 bohr\n\n%s 0.0 0.0 0.0\n" % (mobj.group(1))
         psivar_coord = Molecule(
             validate=False,
-            **qcel.molparse.to_schema(
-                qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
-            ),
+            **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
         )
 
     # Process error codes
@@ -1175,7 +1169,7 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
 
     """
     # Collect results from output file and subsidiary files
-    out_psivar, out_mol, outGrad, version, module, error = harvest_output(c4out)
+    qcvars, out_mol, outGrad, version, module, error = harvest_output(c4out)
 
     if largs.get("GRD"):
         grdMol, grdGrad = harvest_GRD(largs["GRD"])
@@ -1204,11 +1198,6 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
         qcvars.pop("CURRENT CORRELATION ENERGY")
         qcvars["CURRENT ENERGY"] = qcvars["HF TOTAL ENERGY"]
 
-    if fcmHess is not None and method == "hf":
-        # MP2 available in HF Hessian so need to counteract
-        out_psivar.pop("CURRENT CORRELATION ENERGY")
-        out_psivar["CURRENT ENERGY"] = out_psivar["HF TOTAL ENERGY"]
-
     # Reconcile the coordinate information: several cases
     #   Case                            p4Mol   GRD      Check consistency           Apply orientation?     ReturnMol (1-19-2014)
     #   sp with mol thru cfour {}       None    None              outMol             N.C.                   outMol
@@ -1221,16 +1210,15 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
         if grdMol:
             if abs(out_mol.nuclear_repulsion_energy() - grdMol.nuclear_repulsion_energy()) > 1.0e-3:
                 raise ValueError(
-                    """Cfour outfile (NRE: %f) inconsistent with Cfour GRD (NRE: %f)."""
-                    % (out_mol.nuclear_repulsion_energy(), grdMol.nuclear_repulsion_energy())
+                    f"""CFOUR outfile (NRE: {out_mol.nuclear_repulsion_energy()} inconsistent with CFOUR GRD (NRE: {grdMol.nuclear_repulsion_energy()})."""
                 )
         if in_mol:
             if abs(out_mol.nuclear_repulsion_energy() - in_mol.nuclear_repulsion_energy()) > 1.0e-3:
                 raise ValueError(
-                    f"""Cfour outfile (NRE: {out_mol.nuclear_repulsion_energy()}) inconsistent with AtomicInput (NRE: {in_mol.nuclear_repulsion_energy()})."""
+                    f"""CFOUR outfile (NRE: {out_mol.nuclear_repulsion_energy()}) inconsistent with AtomicInput.molecule (NRE: {in_mol.nuclear_repulsion_energy()})."""
                 )
     else:
-        raise ValueError("""No coordinate information extracted from Cfour output.""")
+        raise ValueError("""No coordinate information extracted from CFOUR output.""")
 
     # Set up array reorientation object(s)
     if in_mol and out_mol and grdMol:
@@ -1255,22 +1243,25 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
         # Frame considerations
         if in_mol.fix_com and in_mol.fix_orientation:
             # Impose input frame if important as signalled by fix_*=T
-            return_mol, data = out_mol.align(in_mol, atoms_map=False, mols_align=True, verbose=0)
+            return_mol = in_mol
+            _, data = out_mol.align(in_mol, atoms_map=False, mols_align=True, verbose=0)
             mill = data["mill"]
 
         else:
-            return_mol = out_mol
-            mill = qcel.molutil.compute_scramble(len(in_mol.symbols), do_resort=False, do_shift=False, do_rotate=False, do_mirror=False)  # identity AlignmentMill
+            return_mol, _ = in_mol.align(out_mol, atoms_map=False, mols_align=True, verbose=0)
+            mill = qcel.molutil.compute_scramble(
+                len(in_mol.symbols), do_resort=False, do_shift=False, do_rotate=False, do_mirror=False
+            )  # identity AlignmentMill
 
-#        _, data = out_mol.align(in_mol, atoms_map=False, mols_align=True, verbose=0)
-#        o2i_mill = data["mill"]
-#
-#        oriCoord = o2i_mill.align_coordinates(oriCoord)
-#        oriGrad = o2i_mill.align_gradient(oriGrad)
-#        if oriDip is not None:
-#            oriDip = o2i_mill.align_vector(oriDip)
-#        if oriHess is not None:
-#            oriHess = o2i_mill.align_hessian(oriHess)
+        #        _, data = out_mol.align(in_mol, atoms_map=False, mols_align=True, verbose=0)
+        #        o2i_mill = data["mill"]
+        #
+        #        oriCoord = o2i_mill.align_coordinates(oriCoord)
+        #        oriGrad = o2i_mill.align_gradient(oriGrad)
+        #        if oriDip is not None:
+        #            oriDip = o2i_mill.align_vector(oriDip)
+        #        if oriHess is not None:
+        #            oriHess = o2i_mill.align_hessian(oriHess)
 
         oriCoord = mill.align_coordinates(oriCoord)
         oriGrad = mill.align_gradient(oriGrad)
@@ -1284,12 +1275,15 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
 
         if in_mol.fix_com and in_mol.fix_orientation:
             # Impose input frame if important as signalled by fix_*=T
-            return_mol, data = out_mol.align(in_mol, atoms_map=True, mols_align=True, verbose=0)
+            return_mol = in_mol
+            _, data = out_mol.align(in_mol, atoms_map=True, mols_align=True, verbose=0)
             mill = data["mill"]
 
         else:
-            return_mol = out_mol
-            mill = qcel.molutil.compute_scramble(len(in_mol.symbols), do_resort=False, do_shift=False, do_rotate=False, do_mirror=False)  # identity AlignmentMill
+            return_mol, _ = in_mol.align(out_mol, atoms_map=False, mols_align=True, verbose=0)
+            mill = qcel.molutil.compute_scramble(
+                len(in_mol.symbols), do_resort=False, do_shift=False, do_rotate=False, do_mirror=False
+            )  # identity AlignmentMill
 
         oriCoord = mill.align_coordinates(out_mol.geometry)  # (np_out=True))
         oriGrad = None
@@ -1309,10 +1303,10 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
         oriDip = None if dipolDip is None else dipolDip
 
     # not sure of purpose but it interferes now that return_mol overwrites atres.mol
-    #return_mol = None if in_mol else grdMol
+    # return_mol = None if in_mol else grdMol
 
     if oriDip is not None:
-        out_psivar["CURRENT DIPOLE"] = oriDip
+        qcvars["CURRENT DIPOLE"] = oriDip
         oriDip *= qcel.constants.dipmom_au2debye
         # outPsivar["CURRENT DIPOLE X"] = oriDip[0]
         # outPsivar["CURRENT DIPOLE Y"] = oriDip[1]
@@ -1338,7 +1332,7 @@ def harvest(in_mol: Molecule, method: str, c4out, **largs):
     # else:
     #     retCoord = None
 
-    return out_psivar, return_hess, return_grad, return_mol, version, module, error
+    return qcvars, return_hess, return_grad, return_mol, version, module, error
 
 
 def harvest_GRD(grd):
@@ -1364,9 +1358,7 @@ def harvest_GRD(grd):
 
     mol = Molecule(
         validate=False,
-        **qcel.molparse.to_schema(
-            qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
-        ),
+        **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
     )
 
     return mol, grad

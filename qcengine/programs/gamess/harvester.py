@@ -54,18 +54,23 @@ def harvest(
                 )
 
         # Frame considerations
+        # * `in_mol` built with deliberation and with all fields accessible.
+        # * `calc_mol` has the internally consistent geometry frame but otherwise dinky (geom & symbols & maybe chgmult).
         if in_mol.fix_com and in_mol.fix_orientation:
             # Impose input frame if important as signalled by fix_*=T
-            return_mol, data = out_mol.align(in_mol, atoms_map=False, mols_align=True, verbose=0)
+            return_mol = in_mol
+            _, data = calc_mol.align(in_mol, atoms_map=False, mols_align=True, run_mirror=True, verbose=0)
             mill = data["mill"]
 
         else:
-            return_mol = out_mol
-            mill = qcel.molutil.compute_scramble(len(in_mol.symbols), do_resort=False, do_shift=False, do_rotate=False, do_mirror=False)  # identity AlignmentMill
+            return_mol, _ = in_mol.align(calc_mol, atoms_map=False, mols_align=True, run_mirror=True, verbose=0)
+            mill = qcel.molutil.compute_scramble(
+                len(in_mol.symbols), do_resort=False, do_shift=False, do_rotate=False, do_mirror=False
+            )  # identity AlignmentMill
 
         return_grad = None
         if calc_grad is not None:
-            return_grad = mill.align_gradient(np.array(calc_grad).reshape(-1, 3))
+            return_grad = mill.align_gradient(calc_grad)
 
         return_hess = None
         if calc_hess is not None:
