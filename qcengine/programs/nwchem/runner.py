@@ -251,7 +251,7 @@ task python
         # LW 7Jul21: I allow exceptions to be raised so that we can detect errors
         #   in the parsing of output files
         qcvars, nwhess, nwgrad, nwmol, version, module, errorTMP = harvest(
-            input_model.molecule, input_model.model.method, stdout, **outfiles
+            input_model.molecule, method, stdout, **outfiles
         )
 
         try:
