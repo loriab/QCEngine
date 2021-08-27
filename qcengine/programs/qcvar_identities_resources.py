@@ -388,6 +388,8 @@ qcvars_to_atomicproperties = {
     "ONE-ELECTRON ENERGY": "scf_one_electron_energy",
     "TWO-ELECTRON ENERGY": "scf_two_electron_energy",
     "CURRENT ENERGY": "return_energy",
+    "CURRENT GRADIENT": "return_gradient",
+    "CURRENT HESSIAN": "return_hessian",
     # HF keywords
     "HF DIPOLE": "scf_dipole_moment",
     "HF QUADRUPOLE": "scf_quadrupole_moment",
