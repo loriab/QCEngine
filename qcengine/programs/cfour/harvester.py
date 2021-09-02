@@ -999,7 +999,9 @@ def harvest_outfile_pass(outtext):
         # Rather a dinky Molecule as no ghost, charge, or multiplicity
         psivar_coord = Molecule(
             validate=False,
-            **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
+            **qcel.molparse.to_schema(
+                qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
+            ),
         )
 
     # Process atom geometry
@@ -1013,7 +1015,9 @@ def harvest_outfile_pass(outtext):
         molxyz = "1 bohr\n\n%s 0.0 0.0 0.0\n" % (mobj2.group(1))
         psivar_coord = Molecule(
             validate=False,
-            **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
+            **qcel.molparse.to_schema(
+                qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
+            ),
         )
 
     mobj = re.search(
@@ -1030,7 +1034,9 @@ def harvest_outfile_pass(outtext):
         molxyz = "1 bohr\n\n%s 0.0 0.0 0.0\n" % (mobj.group(1))
         psivar_coord = Molecule(
             validate=False,
-            **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
+            **qcel.molparse.to_schema(
+                qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
+            ),
         )
 
     # Process error codes
@@ -1358,7 +1364,9 @@ def harvest_GRD(grd):
 
     mol = Molecule(
         validate=False,
-        **qcel.molparse.to_schema(qcel.molparse.from_string(molxyz, dtype="xyz+")["qm"], dtype=2),
+        **qcel.molparse.to_schema(
+            qcel.molparse.from_string(molxyz, dtype="xyz+", fix_com=True, fix_orientation=True)["qm"], dtype=2
+        ),
     )
 
     return mol, grad
