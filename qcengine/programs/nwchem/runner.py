@@ -143,14 +143,18 @@ class NWChemHarness(ErrorCorrectionProgramHarness):
     def build_input(
         self, input_model: AtomicInput, config: TaskConfig, template: Optional[str] = None
     ) -> Dict[str, Any]:
-        nwchemrec = {"infiles": {}, "scratch_directory": config.scratch_directory}
+        nwchemrec = {
+            "infiles": {},
+            "scratch_directory": config.scratch_directory,
+            "scratch_messy": config.scratch_messy,
+        }
 
         opts = copy.deepcopy(input_model.keywords)
         opts = {k.lower(): v for k, v in opts.items()}
 
         # Handle memory
-        # for nwchem, [GiB] --> [B]
-        # someday, replace with this: opts['memory'] = str(int(config.memory * (1024**3) / 1e6)) + ' mb'
+        # * [GiB] --> [B]
+        # * int() rounds down
         memory_size = int(config.memory * (1024 ** 3))
         if config.use_mpiexec:  # It is the memory per MPI rank
             memory_size //= config.nnodes * config.ncores // config.cores_per_rank
@@ -225,7 +229,7 @@ task python
             inputs["command"],
             inputs["infiles"],
             ["nwchem.hess", "nwchem.grad"],
-            scratch_messy=False,
+            scratch_messy=inputs["scratch_messy"],
             scratch_exist_ok=True,
             scratch_directory=inputs["scratch_directory"],
         )
@@ -243,6 +247,7 @@ task python
         method = method[4:] if method.startswith("nwc-") else method
 
         # Read the NWChem stdout file and, if needed, the hess or grad files
+        # July 2021: nwmol & vector returns now atin/outfile orientation depending on fix_com,orientation=T/F. previously always atin orientation
         # LW 7Jul21: I allow exceptions to be raised so that we can detect errors
         #   in the parsing of output files
         qcvars, nwhess, nwgrad, nwmol, version, module, errorTMP = harvest(
@@ -289,6 +294,7 @@ task python
         # Format them inout an output
         output_data = {
             "schema_version": 1,
+            "molecule": nwmol,  # overwrites with outfile Cartesians in case fix_*=F
             "extras": {"outfiles": outfiles, **input_model.extras},
             "properties": atprop,
             "provenance": provenance,

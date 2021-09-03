@@ -80,14 +80,18 @@ class CFOURHarness(ProgramHarness):
     def build_input(
         self, input_model: AtomicInput, config: "TaskConfig", template: Optional[str] = None
     ) -> Dict[str, Any]:
-        cfourrec = {"infiles": {}, "scratch_directory": config.scratch_directory}
+        cfourrec = {
+            "infiles": {},
+            "scratch_directory": config.scratch_directory,
+            "scratch_messy": config.scratch_messy,
+        }
 
         opts = copy.deepcopy(input_model.keywords)
 
         # Handle memory
-        # for cfour, [GiB] --> [MB]
-        opts["memory_size"] = int(config.memory * (1024 ** 3) / 1e6)
-        opts["mem_unit"] = "mb"
+        # for cfour, [GiB] --> [QW]
+        opts["memory_size"] = int(config.memory * (1024 ** 3) / 8)
+        opts["mem_unit"] = "integerwords"
 
         # Handle molecule
         molcmd, moldata = input_model.molecule.to_string(dtype="cfour", units="Bohr", return_data=True)
@@ -123,11 +127,13 @@ class CFOURHarness(ProgramHarness):
         self, inputs: Dict[str, Any], *, extra_outfiles=None, extra_commands=None, scratch_name=None, timeout=None
     ) -> Tuple[bool, Dict]:
 
+        # llel works b/c util.environ_context sets OMP_NUM_THREADS = config.ncores
+
         success, dexe = execute(
             inputs["command"],
             inputs["infiles"],
-            ["GRD", "FCMFINAL", "DIPOL"],
-            scratch_messy=False,
+            ["GRD", "FCMFINAL", "DIPOL"],  # "DIPDER", "POLAR", "POLDER"],
+            scratch_messy=inputs["scratch_messy"],
             scratch_directory=inputs["scratch_directory"],
         )
         return success, dexe
@@ -144,6 +150,7 @@ class CFOURHarness(ProgramHarness):
 
         # c4mol, if it exists, is dinky, just a clue to geometry of cfour results
         try:
+            # July 2021: c4mol & vector returns now atin/outfile orientation depending on fix_com,orientation=T/F. previously always atin orientation
             qcvars, c4hess, c4grad, c4mol, version, module, errorTMP = harvest(
                 input_model.molecule, method, stdout, **outfiles
             )
@@ -156,6 +163,9 @@ class CFOURHarness(ProgramHarness):
                 + "\nTRACEBACK:\n"
                 + "".join(traceback.format_exception(*sys.exc_info()))
             )
+
+        if errorTMP != "":
+            raise UnknownError("STDOUT:\n" + stdout + "\nSTDERR:\n" + stderr)
 
         try:
             if c4grad is not None:
@@ -180,6 +190,8 @@ class CFOURHarness(ProgramHarness):
                 + "".join(traceback.format_exception(*sys.exc_info()))
             )
 
+        # TODO: "xalloc(): memory allocation failed!"
+
         if isinstance(retres, Decimal):
             retres = float(retres)
         elif isinstance(retres, np.ndarray):
@@ -194,6 +206,7 @@ class CFOURHarness(ProgramHarness):
 
         output_data = {
             "schema_version": 1,
+            "molecule": c4mol,  # overwrites with outfile Cartesians in case fix_*=F
             "extras": {"outfiles": outfiles, **input_model.extras},
             "properties": atprop,
             "provenance": provenance,
